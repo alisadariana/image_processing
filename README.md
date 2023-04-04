@@ -17,3 +17,11 @@
 	5 - multiply by given value the gray levels of grayscale image
 
 	6 - create image with four differently colored sections
+
+	7 - extract rgb channels from image
+
+	8 - transform rgb image to grayscale
+
+	9 - transform grayscale image to binary
+
+	10 - transform rgb image to hsv space
