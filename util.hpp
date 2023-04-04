@@ -5,4 +5,7 @@
 #endif
 using namespace cv;
 
+int is_inside_image(Mat image, int row, int col);
 Mat negate(Mat src);
+Mat grayscale_to_binary(Mat src, int threshold);
+void rgb_to_hsv(Mat image, Mat hue, Mat saturation, Mat value);

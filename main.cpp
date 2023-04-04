@@ -163,7 +163,131 @@ void create_four_section_image()
 	destroyAllWindows();
 }
 
-int main(int argc, char** argv )
+int extract_rgb_channels(String imagePath)
+{
+	int i, j;
+	float aux;
+	Mat image;
+	Mat redImage, greenImage, blueImage;
+	Vec3b pixel;
+
+	image = imread(imagePath, IMREAD_COLOR);
+	if (!image.data) {
+		printf("extract_rgb_channels: No image data\n");
+		return -1;
+	}
+
+	redImage = Mat(image.rows, image.cols, IMREAD_GRAYSCALE);
+	greenImage = Mat(image.rows, image.cols, IMREAD_GRAYSCALE);
+	blueImage = Mat(image.rows, image.cols, IMREAD_GRAYSCALE);
+
+	for (i = 0; i < image.rows; i++) {
+		for (j = 0; j < image.cols; j++) {
+			pixel = image.at<Vec3b>(i, j);
+			redImage.at<uchar>(i, j) = pixel[2];
+			greenImage.at<uchar>(i, j) = pixel[1];
+			blueImage.at<uchar>(i, j) = pixel[0];
+		}
+	}
+
+	imshow("Image", image);
+	imshow("Red Image", redImage);
+	imshow("Green Image", greenImage);
+	imshow("Blue Image", blueImage);
+	waitKey(0);
+	destroyAllWindows();
+	return 0;
+}
+
+int rgb_to_grayscale(String imagePath)
+{
+	int i, j;
+	float aux;
+	Mat image;
+	Mat grayscaleImage;
+	Vec3b pixel;
+
+	image = imread(imagePath, IMREAD_COLOR);
+	if (!image.data) {
+		printf("rgb_to_grayscale: No image data\n");
+		return -1;
+	}
+
+	grayscaleImage = Mat(image.rows, image.cols, IMREAD_GRAYSCALE);
+
+	for (i = 0; i < image.rows; i++) {
+		for (j = 0; j < image.cols; j++) {
+			pixel = image.at<Vec3b>(i, j);
+			grayscaleImage.at<uchar>(i, j) = (pixel[0] + pixel[1] + pixel[2]) / 3;
+		}
+	}
+
+	imshow("Image", image);
+	imshow("Grayscale Image", grayscaleImage);
+	waitKey(0);
+	destroyAllWindows();
+	return 0;
+}
+
+int display_grayscale_to_binary(String imagePath, int treshold)
+{
+	int i, j;
+	Mat image;
+	Mat binaryImage;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_grayscale_to_binary: image empty\n");
+		return -1;
+	}
+
+	binaryImage = grayscale_to_binary(image, treshold);
+	if (binaryImage.empty()) {
+		perror("display_grayscale_to_binary: binaryImage empty\n");
+		return -1;
+	}
+
+	imshow("Image", image);
+	imshow("Binary Image", binaryImage);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_rgb_to_hsv(String imagePath)
+{
+	Mat image;
+	Mat hue, saturation, value;
+
+	image = imread(imagePath, IMREAD_COLOR);
+	if (image.empty()) {
+		perror("display_rgb_to_hsv: image empty\n");
+		return -1;
+	}
+
+	hue = Mat(image.rows, image.cols, IMREAD_GRAYSCALE);
+	saturation = Mat(image.rows, image.cols, IMREAD_GRAYSCALE);
+	value = Mat(image.rows, image.cols, IMREAD_GRAYSCALE);
+
+	rgb_to_hsv(image, hue, saturation, value);
+
+	resize(image, image, Size(), 4, 4, INTER_NEAREST);
+	resize(hue, hue, Size(), 4, 4, INTER_NEAREST);
+	resize(saturation, saturation, Size(), 4, 4, INTER_NEAREST);
+	resize(value, value, Size(), 4, 4, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Hue", hue);
+	imshow("Saturation", saturation);
+	imshow("Value", value);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int main(int argc, char **argv)
 {
 	int op;
 	int ret = 0;
@@ -225,6 +349,32 @@ int main(int argc, char** argv )
 		case 6:
 			std::cout << "Create image with four equal colored sections" << std::endl;
 			create_four_section_image();
+			break;
+		case 7:
+			std::cout << "Extract RGB channels from image " << imageName << std::endl;
+			ret = extract_rgb_channels(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 8:
+			std::cout << "RBG to grayscale " << imageName << std::endl;
+			ret = rgb_to_grayscale(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 9:
+			std::cout << "Grayscale to binary " << imageName << std::endl;
+			std::cout << "Treshold = ";
+			scanf("%d", &val);
+			ret = display_grayscale_to_binary(imagePath, val);
+			if (ret)
+				return -1;
+			break;
+		case 10:
+			std::cout << "RGB to HSV " << imageName << std::endl;
+			ret = display_rgb_to_hsv(imagePath);
+			if (ret)
+				return -1;
 			break;
 		default:
 			std::cout << "Unknown operation" << std::endl;
