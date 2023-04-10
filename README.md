@@ -25,3 +25,9 @@
 	9 - transform grayscale image to binary
 
 	10 - transform rgb image to hsv space
+
+	11 - display graphical representation of histogram
+
+	12 - print values of histogram with chosen number of bins
+
+	13 - display image reconstructed with multilevel tresholding
