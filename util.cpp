@@ -108,3 +108,85 @@ void rgb_to_hsv(Mat image, Mat hue, Mat saturation, Mat value)
 		}
 	}
 }
+
+
+int compute_histogram(Mat image, int *histogram)
+{
+	int i, j;
+
+	if (histogram == NULL)
+		return -1;
+
+	for (i = 0; i < 256; i++)
+		histogram[i] = 0;
+
+	for (i = 0; i < image.rows; i++)
+		for (j = 0; j < image.cols; j++)
+			histogram[image.at<uchar>(i, j)]++;
+
+	return 0;
+}
+
+int compute_histogram(Mat image, int *histogram, float *pdf)
+{
+	int i, j;
+	int resolution;
+
+	if (histogram == NULL)
+		return -1;
+
+	if (pdf == NULL)
+		return -1;
+
+	for (i = 0; i < 256; i++)
+		histogram[i] = 0;
+
+	for (i = 0; i < image.rows; i++)
+		for (j = 0; j < image.cols; j++)
+			histogram[image.at<uchar>(i, j)]++;
+
+	resolution = image.rows * image.cols;
+
+	for (i = 0; i < 256; i++)
+		pdf[i] = (float) histogram[i] / resolution;
+
+	return 0;
+}
+
+void compute_histogram_bins(Mat image, int *histogram, int numberBins)
+{
+	int step = 256 / numberBins;
+	int i, j;
+
+	for (i = 0; i < numberBins; i++) {
+		histogram[i] = 0;
+	}
+
+	for (i = 0; i < image.rows; i++) {
+		for (j = 0; j < image.cols; j++) {
+			histogram[image.at<uchar>(i, j) / step]++;
+		}
+	}
+}
+
+Mat create_histogram_image(const String &name, int *hist, const int height,
+			   const int width)
+{
+	cv::Mat imgHist(height, width, CV_8UC3, CV_RGB(255, 255, 255));
+	int max_hist = 0;
+	double scale = 1.0;
+
+	for (int i = 0; i < width; i++)
+		if (hist[i] > max_hist)
+			max_hist = hist[i];
+
+	scale = (double) height / max_hist;
+	int baseline = height - 1;
+	for (int x = 0; x < width; x++) {
+		cv::Point p1 = cv::Point(x, baseline);
+		cv::Point p2 = cv::Point(x, baseline - cvRound(hist[x] * scale));
+		line(imgHist, p1, p2, CV_RGB(255, 0, 255));
+	}
+
+	return imgHist;
+}

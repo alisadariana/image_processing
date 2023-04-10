@@ -287,6 +287,173 @@ int display_rgb_to_hsv(String imagePath)
 	return 0;
 }
 
+int display_histogram(String imagePath)
+{
+	Mat image, histogramImage;
+	int ret;
+	int histogram[256];
+
+	image = imread(imagePath, IMREAD_COLOR);
+	if (image.empty()) {
+		perror("display_histogram: image empty\n");
+		return -1;
+	}
+
+	ret = compute_histogram(image, histogram);
+	if (ret) {
+		perror("display_histogram: Error in compute_histogram()\n");
+		return -1;
+	}
+
+	histogramImage = create_histogram_image("Histogram", histogram, 256, 256);
+	if (histogramImage.empty()) {
+		perror("display_histogram: Error in create_histogram_image()\n");
+		return -1;
+	}
+
+	imshow("Image", image);
+	imshow("Histogram", histogramImage);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int print_histogram_bins(String imagePath, int numberBins)
+{
+	Mat image;
+	int histogram[numberBins];
+	int i;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (!image.data) {
+		printf("print_histogram_bins: No image data\n");
+		return -1;
+	}
+
+	compute_histogram_bins(image, histogram, numberBins);
+
+	for (i = 0; i < numberBins; i++) {
+		std::cout << histogram[i] << std::endl;
+	}
+
+	return 0;
+}
+
+int get_multilevel_tresholding_max(Mat image, int *numberMax, int *max,
+				   int *valueMap, int windowHeight = 5,
+				   float treshold = 0.0003)
+{
+	int ret;
+	int histogram[256];
+	float pdf[256];
+	int i, j, k;
+	float average;
+	bool check;
+	int count = 1;
+	int maxValues[256];
+
+	ret = compute_histogram(image, histogram, pdf);
+	if (ret) {
+		printf("get_multilevel_tresholding_max: Error in compute_histogram\n");
+		return -1;
+	}
+
+	max[0] = 0;
+
+	for (k = windowHeight; k < 256 - windowHeight; k++) {
+		average = 0.0f;
+		check = true;
+		for (i = k - windowHeight; i < k + windowHeight; i++) {
+			average += pdf[i];
+			if (pdf[k] < pdf[i])
+				check = false;
+		}
+		average = average / (2 * windowHeight + 1);
+		if ((pdf[k] > average + treshold) && check) {
+			max[count] = k;
+			maxValues[count - 1] = (max[count - 1] + max[count]) / 2;
+			count++;
+		}
+	}
+
+	max[count] = 255;
+	maxValues[count - 1] = (max[count - 1] + max[count]) / 2;
+	maxValues[count] = 255;
+
+	count++;
+	*numberMax = count;
+
+	k = 0;
+	for (i = 0; i < count; i++) {
+		for (j = k; j < maxValues[i]; j++) {
+			valueMap[j] = max[i];
+		}
+		k = maxValues[i];
+	}
+
+	return 0;
+}
+
+int display_multilevel_tresholding(String imagePath, bool floydSteinbergDitheringOn = false)
+{
+	Mat image;
+	Mat outImage;
+	int ret;
+	int numberMax;
+	int max[256];
+	int valueMap[256];
+	int i, j;
+	int oldPixel, newPixel;
+	int error;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (!image.data) {
+		printf("display_multilevel_tresholding: No image data\n");
+		return -1;
+	}
+
+	ret = get_multilevel_tresholding_max(image, &numberMax, max, valueMap);
+	if (ret) {
+		printf("display_multilevel_tresholding: Error in get_multilevel_tresholding_max\n");
+		return -1;
+	}
+
+	outImage = Mat(image.rows, image.cols, CV_8UC1);
+
+	for (i = 0; i < image.rows; i++) {
+		for (j = 0; j < image.cols; j++) {
+			outImage.at<uchar>(i, j) = image.at<uchar>(i, j);
+		}
+	}
+
+	for (i = 0; i < image.rows; i++) {
+		for (j = 0; j < image.cols; j++) {
+			oldPixel = outImage.at<uchar>(i, j);
+			newPixel = valueMap[oldPixel];
+			outImage.at<uchar>(i, j) = newPixel;
+			if (floydSteinbergDitheringOn) {
+				error = oldPixel - newPixel;
+				if (i + 1 < image.rows)
+					outImage.at<uchar>(i + 1, j) = outImage.at<uchar>(i + 1, j) + 7 * error / 16;
+				if (i - 1 >= 0 && j + 1 < image.cols)
+					outImage.at<uchar>(i - 1, j + 1) = outImage.at<uchar>(i - 1, j + 1) + 3 * error / 16;
+				if (j + 1 < image.cols)
+					outImage.at<uchar>(i, j + 1) = outImage.at<uchar>(i, j + 1) + 5 * error / 16;
+				if (i + 1 < image.rows && j + 1 < image.cols)
+					outImage.at<uchar>(i + 1, j + 1) = outImage.at<uchar>(i + 1, j + 1) + error / 16;
+			}
+
+		}
+	}
+
+	imshow("Multilevel Threshold", outImage);
+	imshow("Image", image);
+	waitKey(0);
+	destroyAllWindows();
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int op;
@@ -297,6 +464,8 @@ int main(int argc, char **argv)
 	char name[255];
 	int val;
 	float floatVal;
+	char c;
+	bool option;
 
 	imagesPath = "src/images/";
 	imageName = "lena.jpg";
@@ -373,6 +542,33 @@ int main(int argc, char **argv)
 		case 10:
 			std::cout << "RGB to HSV " << imageName << std::endl;
 			ret = display_rgb_to_hsv(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 11:
+			std::cout << "Histogram of " << imageName << std::endl;
+			ret = display_histogram(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 12:
+			std::cout << "Print histogram divided in bins " << imageName << std::endl;
+			std::cout << "Number of bins = ";
+			scanf("%d", &val);
+			ret = print_histogram_bins(imagePath, val);
+			if (ret)
+				return -1;
+			break;
+		case 13:
+			std::cout << "Multilevel tresholding " << imageName << std::endl;
+			std::cout << "Use Floyd-Steinberg dithering? (y/n) ";
+			scanf("\n%c", &c);
+			printf("Chosen %c\n", c);
+			option = false;
+			if (c == 'y') {
+				option = true;
+			}
+			ret = display_multilevel_tresholding(imagePath, option);
 			if (ret)
 				return -1;
 			break;
