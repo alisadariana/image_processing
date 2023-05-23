@@ -1,5 +1,11 @@
-#include <stdio.h>
-#include <opencv2/opencv.hpp>
+#ifndef OPEN_H
+#define OPEN_H
+	#include <stdio.h>
+	#include <opencv2/opencv.hpp>
+#endif
+
+#include "object.hpp"
+
 using namespace cv;
 
 int display_image(String imagePath)
@@ -603,6 +609,39 @@ int display_multilevel_tresholding(String imagePath, bool floydSteinbergDitherin
 	return 0;
 }
 
+void callback(int event, int x, int y, int flags, void* userdata)
+{
+	if (event == EVENT_LBUTTONDOWN)
+		std::cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+	else if (event == EVENT_RBUTTONDOWN)
+		std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+	else if (event == EVENT_MBUTTONDOWN)
+		std::cout << "Middle button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+	else if (event == EVENT_MOUSEMOVE)
+		std::cout << "Mouse move over the window - position (" << x << ", " << y << ")" << std::endl;
+}
+
+int mouse_callback(String imagePath)
+{
+	Mat image;
+
+	image = imread(imagePath, IMREAD_COLOR);
+
+	if (image.empty()) {
+		perror("mouse_callback: image is empty\n");
+		return -1;
+	}
+
+	namedWindow("Image", 1);
+	setMouseCallback("Image", callback, NULL);
+
+	imshow("Image", image);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int op;
@@ -718,6 +757,38 @@ int main(int argc, char **argv)
 				option = true;
 			}
 			ret = display_multilevel_tresholding(imagePath, option);
+			if (ret)
+				return -1;
+			break;
+		case 14:
+			std::cout << "Mouse callback " << imageName << std::endl;
+			ret = mouse_callback(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 15:
+			std::cout << "Object features " << imageName << std::endl;
+			ret = object_features(imagePath, false);
+			if (ret)
+				return -1;
+			break;
+		case 16:
+			std::cout << "Draw object features " << imageName << std::endl;
+			ret = object_features(imagePath, true);
+			if (ret)
+				return -1;
+			break;
+		case 17:
+			std::cout << "Filter objects by area and orentation " << imageName << std::endl;
+			int maxArea;
+			float minPhi, maxPhi;
+			std::cout << "Max area = ";
+			scanf("%d", &maxArea);
+			std::cout << "Min phi = ";
+			scanf("%f", &minPhi);
+			std::cout << "Max phi = ";
+			scanf("%f", &maxPhi);
+			ret = filter_objects_by_area_and_orientation(imagePath, maxArea, minPhi, maxPhi);
 			if (ret)
 				return -1;
 			break;
