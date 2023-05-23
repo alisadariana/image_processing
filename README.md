@@ -31,3 +31,11 @@
 	12 - print values of histogram with chosen number of bins
 
 	13 - display image reconstructed with multilevel tresholding
+
+	14 - display mouse click coordinates
+
+	15 - print values of object features
+
+	16 - display image with object features
+
+	17 - filter objects by given maximum area and orientation
