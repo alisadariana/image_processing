@@ -39,3 +39,7 @@
 	16 - display image with object features
 
 	17 - filter objects by given maximum area and orientation
+
+	18 - display image labeled by breadth first traversal
+
+	19 - display image labeled by two-pass traversal

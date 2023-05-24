@@ -5,6 +5,7 @@
 #endif
 
 #include "object.hpp"
+#include "label.hpp"
 
 using namespace cv;
 
@@ -354,19 +355,6 @@ int display_rgb_to_hsv(String imagePath)
 	return 0;
 }
 
-int is_inside_image(Mat image, int row, int col)
-{
-	if (row >= image.rows)
-		return 0;
-	if (row < 0)
-		return 0;
-	if (col >= image.cols)
-		return 0;
-	if (col < 0)
-		return 0;
-	return 1;
-}
-
 int compute_histogram(Mat image, int *histogram)
 {
 	int i, j;
@@ -409,8 +397,6 @@ int compute_histogram(Mat image, int *histogram, float *pdf)
 
 	return 0;
 }
-
-
 
 void show_histogram(const String &name, int *hist, const int height,
 		    const int width)
@@ -642,6 +628,54 @@ int mouse_callback(String imagePath)
 	return 0;
 }
 
+int display_breadth_first_traversal_labeling(String imagePath)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_breadth_first_traversal_labeling: image is empty\n");
+		return -1;
+	}
+
+	out = breadth_first_traversal_labeling(image);
+	if (out.empty()) {
+		perror("display_breadth_first_traversal_labeling: out is empty\n");
+		return -1;
+	}
+
+	imshow("Image", image);
+	imshow("Breadth First Traversal Labeling", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_two_pass_labeling(String imagePath)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_two_pass_labeling: image is empty\n");
+		return -1;
+	}
+
+	out = two_pass_labeling(image);
+	if (out.empty()) {
+		perror("display_two_pass_labeling: out is empty\n");
+		return -1;
+	}
+
+	imshow("Image", image);
+	imshow("Two-pass Traversal Labeling", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int op;
@@ -789,6 +823,18 @@ int main(int argc, char **argv)
 			std::cout << "Max phi = ";
 			scanf("%f", &maxPhi);
 			ret = filter_objects_by_area_and_orientation(imagePath, maxArea, minPhi, maxPhi);
+			if (ret)
+				return -1;
+			break;
+		case 18:
+			std::cout << "Breadth first traversal labeling algorithm " << imageName << std::endl;
+			ret = display_breadth_first_traversal_labeling(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 19:
+			std::cout << "Two-pass labeling algorithm " << imageName << std::endl;
+			ret = display_two_pass_labeling(imagePath);
 			if (ret)
 				return -1;
 			break;
