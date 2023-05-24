@@ -4,6 +4,7 @@
 	#include <opencv2/opencv.hpp>
 #endif
 
+#include "label.hpp"
 #include "object.hpp"
 #include "util.hpp"
 
@@ -491,6 +492,54 @@ int mouse_callback(String imagePath)
 	return 0;
 }
 
+int display_breadth_first_traversal_labeling(String imagePath)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_breadth_first_traversal_labeling: image is empty\n");
+		return -1;
+	}
+
+	out = breadth_first_traversal_labeling(image);
+	if (out.empty()) {
+		perror("display_breadth_first_traversal_labeling: out is empty\n");
+		return -1;
+	}
+
+	imshow("Image", image);
+	imshow("Breadth First Traversal Labeling", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_two_pass_labeling(String imagePath)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_two_pass_labeling: image is empty\n");
+		return -1;
+	}
+
+	out = two_pass_labeling(image);
+	if (out.empty()) {
+		perror("display_two_pass_labeling: out is empty\n");
+		return -1;
+	}
+
+	imshow("Image", image);
+	imshow("Two-pass Traversal Labeling", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int op;
@@ -638,6 +687,18 @@ int main(int argc, char **argv)
 			std::cout << "Max phi = ";
 			scanf("%f", &maxPhi);
 			ret = filter_objects_by_area_and_orientation(imagePath, maxArea, minPhi, maxPhi);
+			if (ret)
+				return -1;
+			break;
+		case 18:
+			std::cout << "Breadth first traversal labeling algorithm " << imageName << std::endl;
+			ret = display_breadth_first_traversal_labeling(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 19:
+			std::cout << "Two-pass labeling algorithm " << imageName << std::endl;
+			ret = display_two_pass_labeling(imagePath);
 			if (ret)
 				return -1;
 			break;
