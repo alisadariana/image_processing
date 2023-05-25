@@ -4,6 +4,9 @@
 	#include <opencv2/opencv.hpp>
 #endif
 
+#include <fstream>
+
+#include "border.hpp"
 #include "object.hpp"
 #include "label.hpp"
 
@@ -676,13 +679,126 @@ int display_two_pass_labeling(String imagePath)
 	return 0;
 }
 
+int display_border_of_single_object(String imagePath)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty())
+	{
+		perror("display_border_of_single_object: image is empty\n");
+		return -1;
+	}
+
+	out = border_of_single_object(image, NULL);
+	if (out.empty())
+	{
+		perror("display_border_of_single_object: out is empty\n");
+		return -1;
+	}
+
+	resize(image, image, Size(8 * image.cols, 8 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(8 * out.cols, 8 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Border", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_chain_code_single_object(String imagePath)
+{
+	Mat image, out;
+	std::vector<int> chainCode;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty())
+	{
+		perror("display_chain_code_single_object: image is empty\n");
+		return -1;
+	}
+
+	out = border_of_single_object(image, &chainCode);
+	if (out.empty())
+	{
+		perror("display_chain_code_single_object: out is empty\n");
+		return -1;
+	}
+
+	std::cout << "Chain Code: " << std::endl;
+	for (int elem : chainCode)
+		std::cout << elem << " ";
+	std::cout << std::endl;
+
+	resize(image, image, Size(8 * image.cols, 8 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(8 * out.cols, 8 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Border", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_object_reconstruction_from_chain_code(String inputPath)
+{
+	Mat image;
+	int i, val;
+	int startRow, startCol;
+	int borderLength;
+	std::vector<int> chainCode;
+	std::ifstream inputFile(inputPath);
+
+	image = imread("src/images/files_border_tracing/gray_background.bmp", IMREAD_GRAYSCALE);
+	if (image.empty())
+	{
+		perror("display_object_reconstruction_from_chain_code: image is empty\n");
+		return -1;
+	}
+
+	if (inputFile >> startRow >> startCol >> borderLength)
+	{
+		std::cout << "Start Row: " << startRow << std::endl;
+		std::cout << "Start Col: " << startCol << std::endl;
+		std::cout << "Border Length: " << borderLength << std::endl;
+	}
+	else
+	{
+		perror("display_object_reconstruction_from_chain_code: error reading input file\n");
+		return -1;
+	}
+
+	for (i = 0; i < borderLength; i++)
+	{
+		if (inputFile >> val)
+			chainCode.push_back(val);
+		else
+		{
+			perror("display_object_reconstruction_from_chain_code: error reading input file\n");
+			return -1;
+		}
+	}
+
+	image = object_reconstruction_from_chain_code(image, chainCode, startRow, startCol);
+
+	resize(image, image, Size(2 * image.cols, 2 * image.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int op;
 	int ret = 0;
-	String imagesPath;
-	String imageName;
-	String imagePath;
+	String imagesPath, imageName, imagePath;
+	String inputsPath, inputName, inputPath;
 	char name[255];
 	int val;
 	float floatVal;
@@ -690,8 +806,12 @@ int main(int argc, char **argv)
 	bool option;
 
 	imagesPath = "src/images/";
-	imageName = "lena.jpg";
+	imageName = "files_border_tracing/triangle_up.bmp";
 	imagePath = imagesPath + imageName;
+
+	inputsPath = "src/input/";
+	inputName = "reconstruct.txt";
+	inputPath = inputsPath + inputName;
 
 	do {
 		op = 0;
@@ -835,6 +955,24 @@ int main(int argc, char **argv)
 		case 19:
 			std::cout << "Two-pass labeling algorithm " << imageName << std::endl;
 			ret = display_two_pass_labeling(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 20:
+			std::cout << "Border of single object " << imageName << std::endl;
+			ret = display_border_of_single_object(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 21:
+			std::cout << "Chain code of border of single object " << imageName << std::endl;
+			ret = display_chain_code_single_object(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 22:
+			std::cout << "Object reconstruction from chain code " << imageName << std::endl;
+			ret = display_object_reconstruction_from_chain_code(inputPath);
 			if (ret)
 				return -1;
 			break;
