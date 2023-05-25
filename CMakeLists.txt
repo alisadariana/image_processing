@@ -5,6 +5,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 add_executable( main
 	main.cpp
 
+	border.cpp
 	label.cpp
 	object.cpp
 	util.cpp
