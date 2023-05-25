@@ -9,6 +9,8 @@
 #include "border.hpp"
 #include "object.hpp"
 #include "label.hpp"
+#include "morphology.hpp"
+#include "util.hpp"
 
 using namespace cv;
 
@@ -793,6 +795,166 @@ int display_object_reconstruction_from_chain_code(String inputPath)
 	return 0;
 }
 
+int display_dilate_n_times(String imagePath, int n)
+{
+	int i;
+	Mat image;
+	Mat out;
+	Mat structuringElement;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_dilate_n_times: image is empty\n");
+		return -1;
+	}
+
+	out = image.clone();
+	structuringElement = Mat::ones(3, 3, CV_8UC1);
+
+	for (i = 0; i < n; i++)
+		out = dilate(out, structuringElement);
+
+	resize(image, image, Size(8 * image.cols, 8 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(8 * out.cols, 8 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Dilated", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_erode_n_times(String imagePath, int n)
+{
+	int i;
+	Mat image;
+	Mat out;
+	Mat structuringElement;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_erode_n_times: image is empty\n");
+		return -1;
+	}
+
+	out = image.clone();
+	structuringElement = Mat::ones(3, 3, CV_8UC1);
+
+	for (i = 0; i < n; i++)
+		out = erode(out, structuringElement);
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(4 * out.cols, 4 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Eroded", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_opening(String imagePath)
+{
+	Mat image;
+	Mat out;
+	Mat structuringElement;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_opening: image is empty\n");
+		return -1;
+	}
+
+	structuringElement = Mat::ones(3, 3, CV_8UC1);
+	out = open(image, structuringElement);
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(4 * out.cols, 4 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Opening", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_closing(String imagePath)
+{
+	Mat image;
+	Mat out;
+	Mat structuringElement;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_closing: image is empty\n");
+		return -1;
+	}
+
+	structuringElement = Mat::ones(3, 3, CV_8UC1);
+	out = close(image, structuringElement);
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(4 * out.cols, 4 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Closing", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_extract_boundary(String imagePath)
+{
+	Mat image;
+	Mat out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_extract_boundary: image is empty\n");
+		return -1;
+	}
+
+	out = extract_boundary(image);
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(4 * out.cols, 4 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Boundary Extract", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_fill_region(String imagePath, int startRow, int startCol)
+{
+	Mat image;
+	Mat out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_fill_region: image is empty\n");
+		return -1;
+	}
+
+	out = fill_region(image, startRow, startCol);
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(4 * out.cols, 4 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Region Fill", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int op;
@@ -804,9 +966,10 @@ int main(int argc, char **argv)
 	float floatVal;
 	char c;
 	bool option;
+	int startRow, startCol;
 
 	imagesPath = "src/images/";
-	imageName = "files_border_tracing/triangle_up.bmp";
+	imageName = "morphological_op_images/region_fill/reg.bmp";
 	imagePath = imagesPath + imageName;
 
 	inputsPath = "src/input/";
@@ -973,6 +1136,50 @@ int main(int argc, char **argv)
 		case 22:
 			std::cout << "Object reconstruction from chain code " << imageName << std::endl;
 			ret = display_object_reconstruction_from_chain_code(inputPath);
+			if (ret)
+				return -1;
+			break;
+		case 23:
+			std::cout << "Dilate n times " << imageName << std::endl;
+			std::cout << "Number of dilations = ";
+			scanf("%d", &val);
+			ret = display_dilate_n_times(imagePath, val);
+			if (ret)
+				return -1;
+			break;
+		case 24:
+			std::cout << "Erode n times " << imageName << std::endl;
+			std::cout << "Number of erosions = ";
+			scanf("%d", &val);
+			ret = display_erode_n_times(imagePath, val);
+			if (ret)
+				return -1;
+			break;
+		case 25:
+			std::cout << "Opening " << imageName << std::endl;
+			ret = display_opening(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 26:
+			std::cout << "Closing " << imageName << std::endl;
+			ret = display_closing(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 27:
+			std::cout << "Boundary extract " << imageName << std::endl;
+			ret = display_extract_boundary(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 28:
+			std::cout << "Region fill " << imageName << std::endl;
+			std::cout << "Start row = ";
+			scanf("%d", &startRow);
+			std::cout << "Start col = ";
+			scanf("%d", &startCol);
+			ret = display_fill_region(imagePath, startRow, startCol);
 			if (ret)
 				return -1;
 			break;
