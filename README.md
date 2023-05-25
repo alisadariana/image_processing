@@ -43,3 +43,16 @@
 	18 - display image labeled by breadth first traversal
 
 	19 - display image labeled by two-pass traversal
+
+
+	23 - dilate n times
+
+	24 - erode n times
+
+	25 - opening
+
+	26 - closing
+
+	27 - boundary extract
+
+	28 - region fil

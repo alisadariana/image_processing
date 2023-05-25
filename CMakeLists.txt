@@ -6,6 +6,7 @@ add_executable( main
 	main.cpp
 
 	border.cpp
+	morphology.cpp
 	label.cpp
 	object.cpp
 	util.cpp
