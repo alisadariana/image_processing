@@ -818,6 +818,163 @@ int display_fill_region(String imagePath, int startRow, int startCol)
 	return 0;
 }
 
+int display_statistical_properties(String imagePath)
+{
+	int ret;
+	int histogram[256], cumulativeHistogram[256];
+	float mean;
+	float standardDeviation;
+	Mat image, histImage, cumulativeHistImage;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_statistical_properties: image is empty\n");
+		return -1;
+	}
+
+	ret = compute_histogram(image, histogram);
+	if (ret) {
+		perror("display_statistical_properties: compute_histogram() failed\n");
+		return -1;
+	}
+
+	mean = compute_mean(histogram, image.rows * image.cols);
+	std::cout << "Mean = " << mean << std::endl;
+
+	standardDeviation = compute_standard_deviation(image, mean);
+	std::cout << "Standard Deviation = " << standardDeviation << std::endl;
+
+	histImage = create_histogram_image("Histogram", histogram, 256, 256);
+
+	ret = compute_cumulative_histogram(histogram, cumulativeHistogram);
+	if (ret) {
+		perror("display_statistical_properties: compute_cumulative_histogram() failed\n");
+		return -1;
+	}
+
+	cumulativeHistImage = create_histogram_image("Cumulative Histogram", cumulativeHistogram, 256, 256);
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(histImage, histImage, Size(4 * histImage.cols, 4 * histImage.rows), 0, 0, INTER_NEAREST);
+	resize(cumulativeHistImage, cumulativeHistImage, Size(4 * cumulativeHistImage.cols, 4 * cumulativeHistImage.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Histogram", histImage);
+	imshow("Cumulative Histogram", cumulativeHistImage);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_automatic_tresholding(String imagePath)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_automatic_tresholding: image is empty\n");
+		return -1;
+	}
+
+	out = automatic_thresholding(image);
+	if (out.empty()) {
+		perror("display_automatic_tresholding: out is empty\n");
+		return -1;
+	}
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(4 * out.cols, 4 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Automatic Tresholding", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_histogram_equalization(String imagePath)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_histogram_equalization: image is empty\n");
+		return -1;
+	}
+
+	out = histogram_equalization(image);
+	if (out.empty()) {
+		perror("display_histogram_equalization: out is empty\n");
+		return -1;
+	}
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(4 * out.cols, 4 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Histogram Equalization", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_gamma_correction(String imagePath, float gamma)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_gamma_correction: image is empty\n");
+		return -1;
+	}
+
+	out = gamma_correction(image, gamma);
+	if (out.empty()) {
+		perror("display_gamma_correction: out is empty\n");
+		return -1;
+	}
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(4 * out.cols, 4 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Gamma Correction", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_stretch_shrink(String imagePath, int newMin, int newMax)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_stretch_shrink: image is empty\n");
+		return -1;
+	}
+
+	out = histogram_stretch_shrink(image, newMin, newMax);
+	if (out.empty()) {
+		perror("display_stretch_shrink: out is empty\n");
+		return -1;
+	}
+
+	resize(image, image, Size(4 * image.cols, 4 * image.rows), 0, 0, INTER_NEAREST);
+	resize(out, out, Size(4 * out.cols, 4 * out.rows), 0, 0, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Stretch Shrink", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int op;
@@ -830,9 +987,10 @@ int main(int argc, char **argv)
 	char c;
 	bool option;
 	int startRow, startCol;
+	int min, max;
 
 	imagesPath = "src/images/";
-	imageName = "morphological_op_images/region_fill/reg.bmp";
+	imageName = "statistical_prop/wheel.bmp";
 	imagePath = imagesPath + imageName;
 
 	inputsPath = "src/input/";
@@ -1043,6 +1201,42 @@ int main(int argc, char **argv)
 			std::cout << "Start col = ";
 			scanf("%d", &startCol);
 			ret = display_fill_region(imagePath, startRow, startCol);
+			if (ret)
+				return -1;
+			break;
+		case 29:
+			std::cout << "Statistical properties " << imageName << std::endl;
+			ret = display_statistical_properties(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 30:
+			std::cout << "Automatic tresholding " << imageName << std::endl;
+			ret = display_automatic_tresholding(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 31:
+			std::cout << "Histogram equalization " << imageName << std::endl;
+			ret = display_histogram_equalization(imagePath);
+			if (ret)
+				return -1;
+			break;
+		case 32:
+			std::cout << "Gamma correction " << imageName << std::endl;
+			std::cout << "Gamma = ";
+			scanf("%f", &floatVal);
+			ret = display_gamma_correction(imagePath, floatVal);
+			if (ret)
+				return -1;
+			break;
+		case 33:
+			std::cout << "Stretch/shrink " << imageName << std::endl;
+			std::cout << "New min = ";
+			scanf("%d", &min);
+			std::cout << "New max = ";
+			scanf("%d", &max);
+			ret = display_stretch_shrink(imagePath, min, max);
 			if (ret)
 				return -1;
 			break;
