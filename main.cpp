@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include "border.hpp"
+#include "filter.hpp"
 #include "label.hpp"
 #include "morphology.hpp"
 #include "object.hpp"
@@ -975,6 +976,91 @@ int display_stretch_shrink(String imagePath, int newMin, int newMax)
 	return 0;
 }
 
+int display_median_filter(String imagePath, int kernelSize)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty()) {
+		perror("display_median_filter: image is empty\n");
+		return -1;
+	}
+
+	out = filter_median(image, kernelSize);
+	if (out.empty()) {
+		perror("display_median_filter: out is empty\n");
+		return -1;
+	}
+
+	resize(image, image, Size(), 4, 4, INTER_NEAREST);
+	resize(out, out, Size(), 4, 4, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Median Filter", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_filter_gaussian_2d(String imagePath, int kernelSize)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty())
+	{
+		perror("display_filter_gaussian_2d: image is empty\n");
+		return -1;
+	}
+
+	out = filter_gaussian_2d(image, kernelSize);
+	if (out.empty())
+	{
+		perror("display_filter_gaussian_2d: out is empty\n");
+		return -1;
+	}
+
+	resize(image, image, Size(), 4, 4, INTER_NEAREST);
+	resize(out, out, Size(), 4, 4, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Gaussian Filter", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
+int display_filter_gaussian_vec(String imagePath, int kernelSize)
+{
+	Mat image, out;
+
+	image = imread(imagePath, IMREAD_GRAYSCALE);
+	if (image.empty())
+	{
+		perror("display_filter_gaussian_vec: image is empty\n");
+		return -1;
+	}
+
+	out = filter_gaussian_vec(image, kernelSize);
+	if (out.empty())
+	{
+		perror("display_filter_gaussian_vec: out is empty\n");
+		return -1;
+	}
+
+	resize(image, image, Size(), 4, 4, INTER_NEAREST);
+	resize(out, out, Size(), 4, 4, INTER_NEAREST);
+
+	imshow("Image", image);
+	imshow("Gaussian Filter Vector", out);
+	waitKey(0);
+	destroyAllWindows();
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int op;
@@ -990,7 +1076,7 @@ int main(int argc, char **argv)
 	int min, max;
 
 	imagesPath = "src/images/";
-	imageName = "statistical_prop/wheel.bmp";
+	imageName = "noise/balloons_gauss.bmp";
 	imagePath = imagesPath + imageName;
 
 	inputsPath = "src/input/";
@@ -1237,6 +1323,30 @@ int main(int argc, char **argv)
 			std::cout << "New max = ";
 			scanf("%d", &max);
 			ret = display_stretch_shrink(imagePath, min, max);
+			if (ret)
+				return -1;
+			break;
+		case 50:
+			std::cout << "Median filter " << imageName << std::endl;
+			std::cout << "Filter size (3, 5, 7) = ";
+			scanf("%d", &val);
+			ret = display_median_filter(imagePath, val);
+			if (ret)
+				return -1;
+			break;
+		case 51:
+			std::cout << "Gaussian 2D filter " << imageName << std::endl;
+			std::cout << "Filter size (3, 5, 7) = ";
+			scanf("%d", &val);
+			ret = display_filter_gaussian_2d(imagePath, val);
+			if (ret)
+				return -1;
+			break;
+		case 52:
+			std::cout << "Gaussian filter with vectors " << imageName << std::endl;
+			std::cout << "Filter size (3, 5, 7) = ";
+			scanf("%d", &val);
+			ret = display_filter_gaussian_vec(imagePath, val);
 			if (ret)
 				return -1;
 			break;
