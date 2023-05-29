@@ -9,6 +9,7 @@
 #include "border.hpp"
 #include "filter.hpp"
 #include "label.hpp"
+#include "morph.hpp"
 #include "morphology.hpp"
 #include "object.hpp"
 #include "util.hpp"
@@ -1347,6 +1348,40 @@ int main(int argc, char **argv)
 			std::cout << "Filter size (3, 5, 7) = ";
 			scanf("%d", &val);
 			ret = display_filter_gaussian_vec(imagePath, val);
+			if (ret)
+				return -1;
+			break;
+		case 100:
+			std::cout << "Store correspondences " << std::endl;
+			ret = store_correspondences();
+			if (ret)
+				return -1;
+			break;
+		case 101:
+			std::cout << "Display correspondences " << std::endl;
+			ret = display_correspondences();
+			if (ret)
+				return -1;
+			break;
+		case 102:
+			std::cout << "Show morphing process " << std::endl;
+			std::cout << "t = ";
+			scanf("%f", &floatVal);
+			ret = show_morphing_process(floatVal);
+			if (ret)
+				return -1;
+			break;
+		case 103:
+			std::cout << "Save morphing frames " << std::endl;
+			std::cout << "Number of frames = ";
+			scanf("%d", &val);
+			ret = save_morphing_frames(val);
+			if (ret)
+				return -1;
+			break;
+		case 104:
+			std::cout << "Add correspondences " << std::endl;
+			ret = add_correspondences();
 			if (ret)
 				return -1;
 			break;
